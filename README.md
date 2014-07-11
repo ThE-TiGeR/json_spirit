@@ -1,26 +1,7 @@
-Table of Contents
-
-Introduction
-Using the Code
-JSON Spirit Value
-Reading JSON
-Writing JSON
-Error Detection
-Unicode Support
-Std::map Implementation
-Stream_reader Class
-Compiling and linking
-Reducing Build Times
-Using JSON Spirit with Multiple Threads
-Advanced
-Container Constructor (Advanced)
-Variant Constructor (Advanced)
-History
-Introduction
+1. Introduction
 JSON is a text file format similar to XML, but less verbose. It has been called "XML lite". This article describes JSON Spirit, a C++ library that reads and writes JSON files or streams. It is written using the Boost Spirit parser generator. If you are already using Boost, you can use JSON Spirit without any additional dependencies.
 
-Key features:
-
+2. Key features
 supports ASCII or Unicode
 std::vector or std::map implementations for JSON Objects
 object library or header file only use
@@ -29,8 +10,6 @@ The JSON Spirit source code is available as a Microsoft Visual Studio 2005 C++ "
 
 Platform independent CMake files are included, kindly supplied by Uwe Arzt, with CPack declarations for packaging and a "make install" target supplied by Amzlkej.
 
-The Visual C++ solution consists of five projects:
-
 The JSON Spirit library and header files
 An application running the library's unit tests
 Three small programs demonstrating how to use JSON Spirit
@@ -38,7 +17,10 @@ JSON Spirit Value
 
 A JSON value can hold either a JSON array, JSON object, string, integer, double, bool, or null. The interface of the JSON Spirit Value class is shown below. The Value class for Unicode is analogous; for details, see the section on Unicode support.
 
- Collapse | Copy Code
+
+```
+#!C++
+
 enum Value_type{ obj_type, array_type, str_type,
      bool_type, int_type, real_type, null_type };
 
@@ -85,13 +67,20 @@ class Value
 
         ...
 };
+
+```
 You obtain the Value's type by calling Value::type(). You can then call the appropriate getter function. Generally, you will know a file's format, so you will know what type the JSON values should have. A std::runtime_error exception is thrown if you try to get a value of the wrong type, for example, if you try to extract a string from a value containing an integer.
 
 The template getter function get_value() is an alternative to get_int(), get_real(), etc. Example usage would be:
 
- Collapse | Copy Code
+
+```
+#!C++
+
 int    i = value_1.get_value< int >();
 double d = value_2.get_value< double >();
+
+```
 A top level Value read from a file or stream normally contains an Array or an Object. An Array is a std::vector of values. An Object is, by default, a std::vector of JSON pairs.
 
  Collapse | Copy Code
@@ -99,7 +88,10 @@ typedef std::vector< Pair > Object;
 typedef std::vector< Value > Array;
 A Pair is a structure that holds a std::string and a Value.
 
- Collapse | Copy Code
+
+```
+#!C++
+
 struct Pair
 {
     Pair( const std::string& name, const Value& value );
@@ -109,19 +101,31 @@ struct Pair
     std::string name_;
     Value value_;
 };
+
+```
 JSON Arrays and Objects can themselves contain other Arrays or Objects, forming a tree.
 
 Note, JSON Spirit provides an alternative std::map based Object; see the Map Implementation section below. In this case, a Pair type is not needed as an mObject is a std::map of names to values.
 
- Collapse | Copy Code
+
+```
+#!C++
+
 typedef std::map< std::string, mValue > mObject;
+
+```
 Reading JSON
 
 You can read JSON data from a stream or a string:
 
- Collapse | Copy Code
+
+```
+#!C++
+
 bool read( const std::string&  s, Value& value );
 bool read( std::istream&  is,     Value& value );
+
+```
 For example:
 
  Collapse | Copy Code
