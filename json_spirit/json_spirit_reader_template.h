@@ -71,18 +71,59 @@ namespace json_spirit
         return ( hex_to_num( c1 ) << 4 ) + hex_to_num( c2 );
     }       
 
-    template< class Char_type, class Iter_type >
-    Char_type unicode_str_to_char( Iter_type& begin )
-    {
-        const Char_type c1( *( ++begin ) );
-        const Char_type c2( *( ++begin ) );
-        const Char_type c3( *( ++begin ) );
-        const Char_type c4( *( ++begin ) );
+    template< class String_type, class Iter_type >
+    String_type unicode_str_to_char(Iter_type& begin);
 
-        return ( hex_to_num( c1 ) << 12 ) + 
-               ( hex_to_num( c2 ) <<  8 ) + 
-               ( hex_to_num( c3 ) <<  4 ) + 
-               hex_to_num( c4 );
+    template<>
+    inline std::wstring unicode_str_to_char(std::wstring::const_iterator& begin)
+    {
+       const std::wstring::value_type c1(*(++begin));
+       const std::wstring::value_type c2(*(++begin));
+       const std::wstring::value_type c3(*(++begin));
+       const std::wstring::value_type c4(*(++begin));
+
+       std::wstring out;
+       out += ((hex_to_num(c1) << 12) +
+               (hex_to_num(c2) << 8) +
+               (hex_to_num(c3) << 4) +
+                hex_to_num(c4));
+       return out;
+    }
+    
+    template<>
+    inline std::string unicode_str_to_char(std::string::const_iterator& begin)
+    {
+        const std::string::value_type c1(*(++begin));
+        const std::string::value_type c2(*(++begin));
+        const std::string::value_type c3(*(++begin));
+        const std::string::value_type c4(*(++begin));
+
+        uint32_t cp = (hex_to_num(c1) << 12) + (hex_to_num(c2) << 8) + (hex_to_num(c3) << 4) + hex_to_num(c4);
+        std::string out;
+        if (cp < 0x80)
+        {                        // one octet
+           out += static_cast<uint8_t>(cp);
+        }
+        else if (cp < 0x800)
+        {                // two octets
+           out += static_cast<uint8_t>((cp >> 6) | 0xc0);
+           out += static_cast<uint8_t>((cp & 0x3f) | 0x80);
+        }
+        else if (cp < 0x10000)
+        {              // three octets
+           out += static_cast<uint8_t>((cp >> 12) | 0xe0);
+           out += static_cast<uint8_t>(((cp >> 6) & 0x3f) | 0x80);
+           out += static_cast<uint8_t>((cp & 0x3f) | 0x80);
+        }
+        else
+        {                                // four octets
+           out += static_cast<uint8_t>((cp >> 18) | 0xf0);
+           out += static_cast<uint8_t>(((cp >> 12) & 0x3f) | 0x80);
+           out += static_cast<uint8_t>(((cp >> 6) & 0x3f) | 0x80);
+           out += static_cast<uint8_t>((cp & 0x3f) | 0x80);
+        }
+
+        return out;
     }
 
     template< class String_type >
@@ -108,7 +149,7 @@ namespace json_spirit
             {
                 if( end - begin >= 3 )  //  expecting "xHH..."
                 {
-                    s += hex_str_to_char< Char_type >( begin );  
+                    s += hex_str_to_char< Char_type >(begin);
                 }
                 break;
             }
@@ -116,7 +157,7 @@ namespace json_spirit
             {
                 if( end - begin >= 5 )  //  expecting "uHHHH..."
                 {
-                    s += unicode_str_to_char< Char_type >( begin );  
+                    s += unicode_str_to_char< String_type >(begin);
                 }
                 break;
             }
